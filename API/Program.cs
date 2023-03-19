@@ -1,52 +1,85 @@
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data;
 using Core.Interfaces;
+using API.Middleware;
+using Microsoft.AspNetCore.Mvc;
+using API.Errors;
+using API.Extensions;
 
-var builder = WebApplication.CreateBuilder(args);
+        var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+        // Add services to the container.
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<StoreContext>(opt=>
-{
-opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") );
-});
+        builder.Services.AddControllers();
 
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddApplicationServices(builder.Configuration);
 
-var app = builder.Build();
+        
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        /*
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+        builder.Services.AddDbContext<StoreContext>(opt =>
+        {
+            opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+        });
 
-// Configure the HTTP request pipeline.middlware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-app.UseStaticFiles();
+        builder.Services.AddScoped<IProductRepository, ProductRepository>();
+        builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.Configure<ApiBehaviorOptions>(options => 
+        {
+            options.InvalidModelStateResponseFactory=actionContext =>
+        {
+            var errors=actionContext.ModelState
+                    .Where (e=>e.Value.Errors.Count>0)
+                    .SelectMany(x=>x.Value.Errors)
+                    .Select(x=>x.ErrorMessage).ToArray();
 
-app.UseAuthorization();
+                    var errorResponse=new ApiValidationErrorResponse
+                    {
+                       Errors=errors     
 
-app.MapControllers();
-
-using var scope = app.Services.CreateScope();
-var services =scope.ServiceProvider;
-var context =services.GetRequiredService<StoreContext>();
-var logger =services.GetRequiredService<ILogger<Program>>();
-
-try 
-{
-await context.Database.MigrateAsync();
-await StoreContextSeed.SeedAsync(context);
-}
-catch(Exception ex)
-{
-logger.LogError(ex,"An error during migration");
-}
+                    };
+                return new BadRequestObjectResult(errorResponse);
+        };
 
 
-app.Run();
+        });
+*/
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.middlware
+
+        app.UseStatusCodePagesWithReExecute("/errors/{0}");
+
+        app.UseMiddleware<ExceptionMiddleware>();
+
+
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        
+        app.UseStaticFiles();
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<StoreContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            await context.Database.MigrateAsync();
+            await StoreContextSeed.SeedAsync(context);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error during migration");
+        }
+
+
+        app.Run();
+
