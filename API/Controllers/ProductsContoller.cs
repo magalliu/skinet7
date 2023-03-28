@@ -1,6 +1,7 @@
 
 using API.Dtos;
 using API.Errors;
+using API.Helpers;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
@@ -87,10 +88,25 @@ namespace API.Controllers
 
         //public async Task<ActionResult<List<Product>>> GetProducts()
         //public async Task<ActionResult<List<ProductToReturnDto>>> GetProducts()
-        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts()
+        //public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts()
+        //public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts(string sort)-sorting
+
+        //public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts(string sort,int?brandId,int? typeId) //sorting and filtring
+        
+        //public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts(
+            //string sort, int?brandId, int? typeId
+            public async Task<ActionResult<IReadOnlyList<Pagination<ProductToReturnDto>>>> GetProducts(
+                        [FromQuery]ProductSpecParams productParams)                //Paging orting and filtring
         {
-            var spec =new ProductsWithTypesAndBrandsSpecification();
+        //var spec =new ProductsWithTypesAndBrandsSpecification();
+            //var spec =new ProductsWithTypesAndBrandsSpecification(sort);-sorting
+            //var spec =new ProductsWithTypesAndBrandsSpecification(sort,brandId,typeId);//sorting and filtring
+            var spec =new ProductsWithTypesAndBrandsSpecification(productParams);
+            var countSpec=new ProductWithFiltersForCountSpecification(productParams);
+            var totalItems=await _productsRepo.CountAsync(countSpec);
             var products = await _productsRepo.ListAsync(spec);
+            var data =_mapper
+            .Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(products);
             //return Ok(products);
             /*
             return products.Select(product=>new ProductToReturnDto
@@ -104,9 +120,11 @@ namespace API.Controllers
 
             }).ToList();
             */
+            /*
             return Ok(_mapper
             .Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
-            
+            */
+            return Ok(new Pagination <ProductToReturnDto>(productParams.PageIndex,productParams.PageSize,totalItems,data));
         }
 
 

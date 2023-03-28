@@ -60,6 +60,7 @@ using API.Extensions;
         app.UseSwaggerUI();
         
         app.UseStaticFiles();
+        app.UseCors("CorsPolicy");
 
         app.UseAuthorization();
 
