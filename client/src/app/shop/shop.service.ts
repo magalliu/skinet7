@@ -27,6 +27,11 @@ export class ShopService {
  //return this.http.get<Pagination<Product[]>>(this.baseURL +'products?pageSize=50');
  return this.http.get<Pagination<Product[]>>(this.baseURL +'products',{params});
   }
+
+getProduct(id:number){
+return this.http.get<Product>(this.baseURL +'products/' +id);
+}
+
 getBrands(){
   return this.http.get<Brand[]>(this.baseURL + 'products/brands');
 }
