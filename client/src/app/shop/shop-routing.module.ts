@@ -4,8 +4,8 @@ import { ProductDetailsComponent } from './product-details/product-details.compo
 import { ShopComponent } from './shop.component';
 
 const routes: Routes = [
-  {path: 'shop',component:ShopComponent},
-  {path: ':id',component:ProductDetailsComponent},
+  {path: '',component:ShopComponent},
+  {path: ':id',component:ProductDetailsComponent,data: {breadcrumb: {alias: 'productDetails'}}},
 ]
 
 
