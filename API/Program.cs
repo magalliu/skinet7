@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddApplicationServices(builder.Configuration);
         builder.Services.AddIdentityService(builder.Configuration);
+        builder.Services.AddSwaggerDocumentation();
 
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -60,8 +61,10 @@ var builder = WebApplication.CreateBuilder(args);
         app.UseMiddleware<ExceptionMiddleware>();
 
 
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        //app.UseSwagger();
+        //app.UseSwaggerUI();
+
+        app.UseSwaggerDocumentation();
         
         app.UseStaticFiles();
         app.UseCors("CorsPolicy");
